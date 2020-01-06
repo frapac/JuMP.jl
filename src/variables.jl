@@ -738,6 +738,47 @@ function set_start_value(variable::VariableRef, value::Number)
 end
 
 """
+    dual_start_value(v::VariableRef)
+
+Return the dual start value (MOI attribute `ConstraintDualStart`) of the variable
+`v`. See also [`set_dual_start_value`](@ref).
+
+"""
+function dual_start_value(v::VariableRef)::Union{Nothing, Float64}
+    # First check that `v` is bounded below or above
+    if !has_lower_bound(v) && !has_upper_bound(v)
+        error("Variable $(v) is unconstrained.")
+    end
+    if has_upper_bound(v)
+        cref = UpperBoundRef(v)
+    elseif has_lower_bound(v)
+        cref = LowerBoundRef(v)
+    end
+    return MOI.get(owner_model(v), MOI.ConstraintDualStart(), cref)
+end
+
+"""
+    set_dual_start_value(variable::VariableRef, value::Number)
+
+Set the dual start value (MOI attribute `ConstraintDualStart`) of
+the variable `v` to `value`. See also [`dual_start_value`](@ref).
+
+"""
+function set_dual_start_value(variable::VariableRef, value::Number)
+    if !has_lower_bound(variable) && !has_upper_bound(variable)
+        error("Variable $(variable) is unconstrained.")
+    end
+    if has_upper_bound(variable)
+        cref = UpperBoundRef(variable)
+    elseif has_lower_bound(variable)
+        cref = LowerBoundRef(variable)
+    end
+    MOI.set(owner_model(variable), MOI.ConstraintDualStart(), cref,
+            Float64(value))
+    return
+end
+
+"""
     value(v::VariableRef; result = 1)
 
 Return the value of variable `v` associated with result index `result` of the

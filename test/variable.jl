@@ -226,6 +226,19 @@ function test_variable_starts_set_get(ModelType)
     @test_throws DimensionMismatch JuMP.set_start_value.(y, collect(1:6))
 end
 
+function test_variable_dual_starts_set_get(ModelType)
+    model = ModelType()
+    # Variables should be constrained for dual start
+    @variable(model, 0 <= x[1:3])
+    x0 = collect(1:3)
+    JuMP.set_start_value.(x, x0)
+    @test JuMP.dual_start_value.(x) == x0
+    @test JuMP.start_value.([x[1],x[2],x[3]]) == x0
+
+    @variable(model, y[1:3])
+    @test_throws ErrorException JuMP.set_dual_start_value.(y, collect(1:6))
+end
+
 function test_variable_integrality_set_get(ModelType)
     model = ModelType()
     @variable(model, x[1:3])
@@ -528,6 +541,10 @@ function variables_test(ModelType::Type{<:JuMP.AbstractModel},
 
     @testset "get and set start" begin
         test_variable_starts_set_get(ModelType)
+    end
+
+    @testset "get and set dual start" begin
+        test_variable_dual_starts_set_get(ModelType)
     end
 
     @testset "get and set integer/binary" begin

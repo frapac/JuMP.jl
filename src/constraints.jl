@@ -627,15 +627,41 @@ function _constraint_dual(
 )::Float64
     return MOI.get(con_ref.model, MOI.ConstraintDual(result), con_ref)
 end
-function _constraint_dual(
-    con_ref::ConstraintRef{
-        Model, <:_MOICON{<:MOI.AbstractVectorFunction, <:MOI.AbstractVectorSet}
-    },
-    result::Int
-)::Vector{Float64}
-    return MOI.get(con_ref.model, MOI.ConstraintDual(result), con_ref)
+
+"""
+    dual_start_value(con_ref::ConstraintRef)
+
+Return the dual start value (MOI attribute `ConstraintDualStart`) of the
+constraint `con_ref`. See also [`set_dual_start_value`](@ref).
+
+"""
+function dual_start_value(con_ref::ConstraintRef)::Union{Nothing, Float64}
+    return reshape_vector(
+        _constraint_dual_start(con_ref),
+        dual_shape(con_ref.shape)
+    )
 end
 
+# Returns the value of MOI.ConstraintPrimal in a type-stable way
+function _constraint_dual_start(
+    con_ref::ConstraintRef{
+        Model, <:_MOICON{<:MOI.AbstractScalarFunction, <:MOI.AbstractScalarSet}
+    },
+)::Float64
+    return MOI.get(owner_model(con_ref), MOI.ConstraintDualStart(), con_ref)
+end
+
+"""
+    set_dual_start_value(con_ref::ConstraintRef, value::Number)
+
+Set the dual start value (MOI attribute `ConstraintDualStart`) of the constraint
+`con_ref` to `value`. See also [`dual_start_value`](@ref).
+
+"""
+function set_dual_start_value(con_ref::ConstraintRef, value::Number)
+    MOI.set(owner_model(con_ref), MOI.ConstraintDualStart(), con_ref,
+            Float64(value))
+end
 
 """
     shadow_price(con_ref::ConstraintRef)
